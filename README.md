@@ -18,8 +18,141 @@ Below I'll leave some images and videos of how it worked, prints of the bot's UI
 
 ## 📝 CAVEBOT SCRIPTS (SEE SCRIPTS FOLDER)
 
+Cavebot scripts are JSON files (with a `.pilotscript` extension) that define a sequence of actions (waypoints) for the bot to follow. You can create and edit these scripts using the Cavebot tab in the application.
+
 - DRAKEN WALLS NORTH ✔️
 - MINOTAUR CULT -1 AND -2 ✔️
+
+### Validating Your Scripts
+
+The Cavebot page includes a **"Validate Script"** button. Clicking this will check your currently loaded script for common errors, such as:
+-   Correct JSON formatting.
+-   Ensuring each waypoint has all required fields (`label`, `type`, `coordinate`, `options`, `ignore`, `passinho`).
+-   Using known waypoint `type` values.
+-   Correct structure and values within the `options` field for each waypoint type.
+-   Valid references for `waypointLabelToRedirect` in `refillChecker` waypoints.
+
+This helps catch issues before you run the bot, saving time and preventing unexpected behavior.
+
+### `.pilotscript` Reference Guide
+
+Each waypoint in a script is a JSON object with the following base structure:
+
+```json
+{
+    "label": "Descriptive Label (optional)",
+    "type": "waypointTypeValue",
+    "coordinate": [x, y, z],
+    "options": {},
+    "ignore": false,
+    "passinho": false
+}
+```
+
+-   `label` (string): An optional name for the waypoint (e.g., "Start Point", "Dragon Lair Entrance"). Used by `refillChecker`.
+-   `type` (string): The type of action to perform. See below for valid types.
+-   `coordinate` (array of 3 integers): The `[x, y, z]` map coordinate for the action.
+-   `options` (object): A dictionary of options specific to the waypoint `type`.
+-   `ignore` (boolean): If `true`, the bot attempts to ignore creatures while executing this waypoint (usually for `walk` type).
+-   `passinho` (boolean): If `true`, uses a special movement mode (details may vary).
+
+#### Waypoint Types and Their Options:
+
+Below are the `KNOWN_WAYPOINT_TYPES` and the structure of their `options` object:
+
+*   **`walk`**
+    *   Purpose: Moves the character to the specified `coordinate`.
+    *   `options`: `{}` (must be empty)
+
+*   **`singleMove`**
+    *   Purpose: Moves the character one step from the `coordinate` in a specified direction.
+    *   `options`:
+        *   `direction` (string): Required. Must be one of `"north"`, `"south"`, `"east"`, `"west"`, `"center"`.
+
+*   **`rightClickDirection`**
+    *   Purpose: Performs a right-click one step from the `coordinate` in a specified direction (e.g., to use a ladder down a hole where the hole itself is not walkable).
+    *   `options`:
+        *   `direction` (string): Required. Must be one of `"north"`, `"south"`, `"east"`, `"west"`, `"center"`.
+
+*   **`useRope`**
+    *   Purpose: Uses a rope on the specified `coordinate` (e.g., a rope spot).
+    *   `options`: `{}` (must be empty)
+
+*   **`useShovel`**
+    *   Purpose: Uses a shovel on the specified `coordinate` (e.g., a hole or dirt patch).
+    *   `options`: `{}` (must be empty)
+
+*   **`rightClickUse`**
+    *   Purpose: Performs a right-click directly on the `coordinate` (e.g., to open a chest or use an item).
+    *   `options`: `{}` (must be empty)
+
+*   **`openDoor`**
+    *   Purpose: Attempts to open a door at the `coordinate`.
+    *   `options`: `{}` (must be empty)
+
+*   **`useLadder`**
+    *   Purpose: Attempts to use a ladder at the `coordinate`.
+    *   `options`: `{}` (must be empty)
+
+*   **`moveUp`**
+    *   Purpose: Moves the character up one floor (e.g., stairs, ladders, rope holes from below) from the `coordinate` in a specified on-screen direction.
+    *   `options`:
+        *   `direction` (string): Required. Must be one of `"north"`, `"south"`, `"east"`, `"west"`, `"center"`.
+
+*   **`moveDown`**
+    *   Purpose: Moves the character down one floor (e.g., stairs, holes, ladders from above) from the `coordinate` in a specified on-screen direction.
+    *   `options`:
+        *   `direction` (string): Required. Must be one of `"north"`, `"south"`, `"east"`, `"west"`, `"center"`.
+
+*   **`depositGold`**
+    *   Purpose: Initiates the gold deposit process (assumes NPC/bank is open).
+    *   `options`: `{}` (must be empty)
+
+*   **`depositItems`**
+    *   Purpose: Opens the depot in a specified city and deposits items.
+    *   `options`:
+        *   `city` (string): Required. The name of the city where the depot is located. Valid cities include: `"AbDendriel"`, `"Ankrahmun"`, `"Carlin"`, `"Darashia"`, `"Edron"`, `"Farmine"`, `"Issavi"`, `"Kazoordon"`, `"LibertBay"`, `"PortHope"`, `"Rathleton"`, `"Svargrond"`, `"Thais"`, `"Venore"`, `"Yalahar"`, `"Feyrist"`, `"Dark Mansion"`.
+
+*   **`depositItemsHouse`**
+    *   Purpose: Deposits items into a house chest (assumes chest is open or accessible).
+    *   `options`: `{}` (can be empty)
+        *   `city` (string): Optional. If specified, must be a valid city name (see `depositItems` for list). This might be used for specific house deposit logic if implemented.
+
+*   **`dropFlasks`**
+    *   Purpose: Drops empty flasks.
+    *   `options`: `{}` (must be empty)
+
+*   **`travel`**
+    *   Purpose: Initiates NPC travel to a specified city.
+    *   `options`:
+        *   `city` (string): Required. The destination city or travel keyword. Valid values include: `"AbDendriel"`, `"Ankrahmun"`, `"Carlin"`, `"Darashia"`, `"Edron"`, `"Farmine"`, `"Issavi"`, `"Kazoordon"`, `"LibertBay"`, `"PortHope"`, `"Rathleton"`, `"Svargrond"`, `"Thais"`, `"Venore"`, `"Yalahar"`, `"Tibia"`, `"Peg Leg"`, `"shortcut"`.
+
+*   **`refill`**
+    *   Purpose: Buys potions from an NPC.
+    *   `options`:
+        *   `healthPotionEnabled` (boolean): Required. Set to `true` if health potions should be refilled.
+        *   `houseNpcEnabled` (boolean): Required. Set to `true` if refilling from a house NPC (changes dialog keyword).
+        *   `healthPotion` (object): Required.
+            *   `item` (string): Required. Name of the health potion. Valid names include: `"Health Potion"`, `"Strong Health Potion"`, `"Great Health Potion"`, `"Ultimate Health Potion"`, `"Supreme Health Potion"`, `"Great Spirit Potion"`, `"Ultimate Spirit Potion"`.
+            *   `quantity` (integer): Required. Desired total quantity of this potion.
+        *   `manaPotion` (object): Required.
+            *   `item` (string): Required. Name of the mana potion. Valid names include: `"Mana Potion"`, `"Strong Mana Potion"`, `"Great Mana Potion"`, `"Ultimate Mana Potion"`, `"Great Spirit Potion"`, `"Ultimate Spirit Potion"`.
+            *   `quantity` (integer): Required. Desired total quantity of this potion.
+
+*   **`buyBackpack`**
+    *   Purpose: Buys backpacks from an NPC.
+    *   `options`:
+        *   `name` (string): Required. Name of the backpack. Valid names: `"Orange Backpack"`, `"Red Backpack"`, `"Parcel"`.
+        *   `amount` (integer): Required. Number of backpacks to buy.
+
+*   **`refillChecker`**
+    *   Purpose: Checks supply levels (potions, capacity) and redirects to another labeled waypoint if below thresholds.
+    *   `options`:
+        *   `minimumAmountOfHealthPotions` (integer): Required. Bot goes to refill if health potions are below this.
+        *   `minimumAmountOfManaPotions` (integer): Required. Bot goes to refill if mana potions are below this.
+        *   `minimumAmountOfCap` (integer): Required. Bot goes to refill if capacity is below this.
+        *   `waypointLabelToRedirect` (string): Required. The `label` of the waypoint to go to if refill is needed. This label must exist elsewhere in the script.
+        *   `healthEnabled` (boolean): Required. Set to `true` if health potion count should be considered in the check.
 
 ## 🟢 Features
 
@@ -111,32 +244,34 @@ YOU NEED TO USE THIS CONFIGS IN YOUR CLIENT, OTHERWISE WILL NOT WORK
 
 ## ⚙️ Configuration
 
-Tibia PilotNG uses a JSON-based configuration system to allow customization of various parameters.
+Tibia PilotNG settings are managed through a user-friendly interface within the application.
 
--   **`config.default.json`**: This file is included with the application and contains all the default settings. **Do not edit this file directly.** If you want to reset to defaults, you can refer to this file.
--   **`config.json`**: This is your personal configuration file. To customize your settings:
-    1.  Make a copy of `config.default.json`.
-    2.  Rename the copy to `config.json`.
-    3.  Place `config.json` in the root directory of the application (the same directory where the `pilotng` executable is located, or where you run `python main.py` if running from source).
-    4.  Open `config.json` with a text editor and modify the values as needed.
+**Accessing Settings:**
+To change application settings, click the **"Configuration"** button on the main application window. This will open the Settings Page.
 
-The application loads configurations in the following order:
-1.  `config.json` (if it exists)
-2.  `config.default.json` (if `config.json` is not found and `config.default.json` exists)
-3.  Internal in-memory defaults (if neither file is found)
-
-You can configure a wide range of settings, including:
--   Default hotkeys for various actions (healing, movement, spells).
--   Paths for profile files (e.g., `file.json` for UI settings).
--   Lists of in-game items (like backpacks).
--   Keywords for interacting with NPCs (e.g., "hi", "trade").
--   Combat-related thresholds (e.g., when to stop attacking if no monster is near).
--   Delays for keyboard actions to fine-tune bot behavior and mimic human-like interaction.
--   Game window settings (like expected resolution).
--   Pathfinding parameters.
+**Using the Settings Page:**
+The Settings Page allows you to customize various aspects of the bot, such as:
+-   General application behavior (e.g., profile path, game resolution).
+-   In-game item names (e.g., backpack names).
+-   Gameplay mechanics and combat thresholds.
+-   Hotkeys for all actions.
+-   NPC interaction keywords and refill timings.
+-   Keyboard and action delays.
 -   Default values for UI elements.
 
-Refer to `config.default.json` for a complete list of configurable parameters and their default values.
+Navigate through the categories on the left sidebar and adjust the settings in the main area. Once you've made your changes, click **"Save Settings"**. Some settings may require an application restart to take full effect.
+
+**Configuration Files:**
+Your customized settings are saved in a file named `config.json`, located in the root directory of the application (where the `pilotng` executable or `main.py` is).
+
+-   **`config.json`**: Stores your personalized settings. While you can technically edit this file manually, it is **highly recommended to use the in-app Settings Page** to avoid errors.
+-   **`config.default.json`**: This file is included with the application and serves as a template containing all default values. If `config.json` is missing or deleted, the application will use the values from `config.default.json` on the next run. You can also refer to this file to see the default state of all settings. The **"Reset to Defaults"** button on the Settings Page effectively reverts the settings in `config.json` (or your current session if not yet saved) back to these defaults.
+-   **Internal Defaults**: If both `config.json` and `config.default.json` are missing, the application will fall back to a set of internal, hardcoded defaults.
+
+To start with a fresh set of default configurations that you can customize, you can:
+1.  Ensure no `config.json` exists in the root directory.
+2.  The application will then use `config.default.json` (or internal defaults if it's also missing).
+3.  Open the Settings Page, make any desired changes, and click "Save Settings". This will create a new `config.json` with your choices.
 
 ## ⚙️ HOW TO SETUP
 
